@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Password Strength Checker</title>
+    <style>
+        /* Changing Background Themes */
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(to right, #f9d5d3 50%, #e6a9e6 50%); /* Blush and Lavender gradient */
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 10px 30px rgba(128, 0, 128, 0.5);
+            margin: auto;
+            position: relative;
+        }
+
+        h2 {
+            color: #bb86fc;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        input {
+            width: 85%;
+            padding: 14px;
+            margin-top: 15px;
+            border: 2px solid #bb86fc;
+            border-radius: 10px;
+            background: #f5f5f5;
+            color: #333;
+            font-size: 18px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #ffcc00;
+            outline: none;
+            background: #fff;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 20px;
+            color: #bb86fc;
+            transition: 0.3s;
+        }
+
+        .toggle-btn:hover {
+            color: #ffcc00;
+        }
+
+        #strength-meter {
+            width: 100%;
+            height: 12px;
+            background: #444;
+            position: relative;
+            margin-top: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #strength-meter::after {
+            content: "";
+            position: absolute;
+            width: var(--strength, 0%);
+            height: 100%;
+            background: red;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        #strength-text {
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .password-suggestion {
+            font-size: 16px;
+            margin-top: 20px;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            color: #bb86fc;
+        }
+
+        .generate-btn {
+            background-color: #bb86fc;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .generate-btn:hover {
+            background-color: #ffcc00;
+        }
+
+        .domain-wrapper {
+            margin-top: 20px;
+        }
+
+        input#domain {
+            width: 60%;
+            padding: 12px;
+            margin-top: 10px;
+            border: 2px solid #bb86fc;
+            border-radius: 8px;
+            background: #f5f5f5;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .story-container {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .fade-in {
+            animation: fadeIn 3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 Password Strength Checker 🎭</h2>
+        <div class="password-wrapper">
+            <input type="password" id="password" placeholder="Enter password" oninput="checkStrength()">
+            <span class="toggle-btn" onclick="togglePassword()">👁</span>
+        </div>
+        <div id="strength-meter"></div>
+        <div id="strength-text">💬 Enter a password</div>
+        <div id="reasons" class="reasons"></div>
+        <div class="password-suggestion" id="password-suggestion">
+            <span>💡 Tip: A strong password should be at least 12 characters long, containing a mix of letters, numbers, and special characters.</span>
+        </div>
+        <button class="generate-btn" onclick="generateStrongPassword()">Generate Strong Password</button>
+
+        <div class="domain-wrapper">
+            <input type="text" id="domain" placeholder="Enter your domain (e.g., email, bank, social)" oninput="updatePasswordHint()">
+        </div>
+
+        <div class="story-container" id="story-container"></div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById('password');
+            const toggleIcon = document.querySelector('.toggle-btn');
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.textContent = '🙈';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.textContent = '👁';
+            }
+        }
+
+        function checkStrength() {
+            const password = document.getElementById('password').value;
+            const strengthMeter = document.getElementById('strength-meter');
+            const strengthText = document.getElementById('strength-text');
+            const reasons = document.getElementById('reasons');
+            let strength = 0;
+            let reasonText = [];
+
+            if (password.length >= 16) {
+                strength += 20;
+                reasonText.push("Length of 16+ characters");
+            }
+            if (/[A-Z]/.test(password)) {
+                strength += 20;
+                reasonText.push("Contains uppercase letter");
+            }
+            if (/[a-z]/.test(password)) {
+                strength += 20;
+                reasonText.push("Contains lowercase letter");
+            }
+            if (/\d/.test(password)) {
+                strength += 20;
+                reasonText.push("Contains number");
+            }
+            if (/[\W_]/.test(password)) {
+                strength += 20;
+                reasonText.push("Contains special character");
+            }
+
+            let color = 'red';
+            if (strength >= 80) {
+                color = 'green';
+                strengthText.innerText = "💪 Very Strong";
+            } else if (strength >= 60) {
+                color = 'orange';
+                strengthText.innerText = "👍 Strong";
+            } else if (strength >= 40) {
+                color = 'yellow';
+                strengthText.innerText = "👀 Medium";
+            } else {
+                strengthText.innerText = "❌ Weak";
+            }
+
+            strengthMeter.style.setProperty('--strength', `${strength}%`);
+            strengthMeter.querySelector('::after').style.backgroundColor = color;
+
+            reasons.innerHTML = reasonText.join('<br>');
+        }
+
+        function generateStrongPassword() {
+            let password = '';
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
+            const memorableWords = ['Galaxy', 'Rainbow', 'Thunder', 'Jungle', 'Phoenix'];
+
+            for (let i = 0; i < 16; i++) {
+                password += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+
+            document.getElementById('password').value = password;
+            updatePasswordHint();
+            showStory(password, memorableWords);
+        }
+
+        function updatePasswordHint() {
+            const domain = document.getElementById('domain').value.trim();
+            const hintElement = document.getElementById('password-suggestion');
+            if (domain) {
+                hintElement.innerHTML = `💡 For your ${domain}, try using a unique phrase with numbers and symbols!`;
+            } else {
+                hintElement.innerHTML = `💡 A strong password contains letters, numbers, and symbols.`;
+            }
+        }
+
+        function showStory(password, memorableWords) {
+            const storyContainer = document.getElementById('story-container');
+            const randomWord = memorableWords[Math.floor(Math.random() * memorableWords.length)];
+            const number = password.match(/\d+/)[0];
+            const specialChar = password.match(/[\W_]+/)[0];
+
+            const story = `
+                <div class="fade-in">
+                    <h3>📖 Remember your password like this:</h3>
+                    <p><strong>Story:</strong> Imagine you are on a mission to explore a new world. You have a spaceship called "<span style="color: #ffcc00;">${randomWord}</span>", and you need to find the secret number <span style="color: #bb86fc;">${number}</span> to unlock the treasure. Don't forget to use the magical symbol <span style="color: #ff00cc;">${specialChar}</span> to open the gate!</p>
+                </div>
+            `;
+            storyContainer.innerHTML = story;
+        }
+    </script>
+</body>
+</html>
